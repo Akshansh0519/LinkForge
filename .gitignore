@@ -24,7 +24,7 @@ prisma/*.db
 # Coverage
 coverage/
 
-# Prompts and Plans
-linkforge_prompt.txt
-commit_plan.md
-Interview_Revision_Guide.md
+
+# Client
+client/node_modules/
+client/dist/
