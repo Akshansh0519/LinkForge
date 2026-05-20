@@ -16,18 +16,16 @@ interface CachedUrl {
 }
 
 /**
- * GET /:slug — Redirect to original URL.
- *
- * Hot path — this is the highest frequency route.
- * Flow:
- *   1. Check Redis cache for url:{slug}
- *   2. On hit: fire trackClick without await → redirect 302
- *   3. On miss: query DB → set cache → fire trackClick without await → redirect 302
- *   4. Expired URL: return 410 Gone
- *   5. Not found: return 404
- *
- * Performance logging: logs redirect_latency with cache hit/miss source.
+ * Logs redirect latency with cache source and bucket classification.
+ * Extracted to keep handleRedirect focused on control flow only.
+ * Buckets: fast (<10ms), normal (10-50ms), slow (>50ms)
  */
+function logRedirectLatency(slug: string, source: 'cache' | 'db', startTime: number): void {
+  const ms = performance.now() - startTime
+  const bucket = ms < 10 ? 'fast' : ms < 50 ? 'normal' : 'slow'
+  logger.info({ slug, source, ms: ms.toFixed(2), bucket }, 'redirect_latency')
+}
+
 export async function handleRedirect(req: Request, res: Response): Promise<void> {
   const start = performance.now()
   const { slug } = req.params
@@ -66,10 +64,8 @@ export async function handleRedirect(req: Request, res: Response): Promise<void>
   // 4. Fire-and-forget click tracking — NEVER await
   trackClick(url.id, req)
 
-  // 5. Performance logging with latency bucket classification
-  const ms = performance.now() - start
-  const bucket = ms < 10 ? 'fast' : ms < 50 ? 'normal' : 'slow'
-  logger.info({ slug, source: cacheHit ? 'cache' : 'db', ms: ms.toFixed(2), bucket }, 'redirect_latency')
+  // 5. Log latency (extracted helper)
+  logRedirectLatency(slug, cacheHit ? 'cache' : 'db', start)
 
   // 6. Redirect
   res.redirect(302, url.original)
