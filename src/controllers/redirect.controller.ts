@@ -5,6 +5,9 @@ import { trackClick } from '../services/analytics.service'
 import { AppError } from '../lib/errors'
 import logger from '../lib/logger'
 
+/** TTL for cached URL records: 1 hour */
+const CACHE_TTL = 3600
+
 interface CachedUrl {
   id: string
   slug: string
@@ -47,10 +50,13 @@ export async function handleRedirect(req: Request, res: Response): Promise<void>
       original: dbUrl.original,
       expiresAt: dbUrl.expiresAt?.toISOString() ?? null,
     }
-    await setCache(slug, urlToCache)
+    await setCache(slug, urlToCache, CACHE_TTL)
     url = urlToCache
     cacheHit = false
   }
+
+  // Expose cache status in response header (useful for debugging & monitoring)
+  res.setHeader('X-Cache', cacheHit ? 'HIT' : 'MISS')
 
   // 3. Check expiration
   if (url.expiresAt && new Date(url.expiresAt) < new Date()) {
@@ -60,9 +66,10 @@ export async function handleRedirect(req: Request, res: Response): Promise<void>
   // 4. Fire-and-forget click tracking — NEVER await
   trackClick(url.id, req)
 
-  // 5. Performance logging
+  // 5. Performance logging with latency bucket classification
   const ms = performance.now() - start
-  logger.info({ slug, source: cacheHit ? 'cache' : 'db', ms: ms.toFixed(2) }, 'redirect_latency')
+  const bucket = ms < 10 ? 'fast' : ms < 50 ? 'normal' : 'slow'
+  logger.info({ slug, source: cacheHit ? 'cache' : 'db', ms: ms.toFixed(2), bucket }, 'redirect_latency')
 
   // 6. Redirect
   res.redirect(302, url.original)
