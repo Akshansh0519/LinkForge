@@ -1,0 +1,41 @@
+# render.yaml — Render Blueprint for LinkForge
+# Docs: https://render.com/docs/blueprint-spec
+#
+# Deploy the entire LinkForge backend from this file.
+# Usage: Connect your GitHub repo on Render and it will auto-detect this file.
+
+services:
+  - type: web
+    name: linkforge-api
+    runtime: node
+    region: oregon
+
+    # ── Build ──────────────────────────────────────────────────────────
+    # --include=dev is REQUIRED: NODE_ENV=production skips devDependencies,
+    # but we need `typescript` (tsc) and `prisma` CLI at build time.
+    buildCommand: npm install --include=dev && npm run prisma:generate && npm run build
+
+    # ── Start ──────────────────────────────────────────────────────────
+    # prisma migrate deploy applies any pending migrations before the server boots.
+    startCommand: npx prisma migrate deploy && npm run start
+
+    plan: free
+    healthCheckPath: /api/health
+
+    # ── Environment Variables ──────────────────────────────────────────
+    # Secret values (DATABASE_URL, REDIS_URL, JWT secrets) must be set
+    # manually in the Render dashboard — do NOT commit secrets here.
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: BCRYPT_ROUNDS
+        value: 12
+      # ⚠️  Set these in Render dashboard → Environment (never commit secrets):
+      #   DATABASE_URL   — Neon / Render PostgreSQL connection string
+      #   REDIS_URL      — Upstash TLS URL (starts with rediss://)
+      #   ACCESS_TOKEN_SECRET   — 32+ char random hex string
+      #   REFRESH_TOKEN_SECRET  — 32+ char random hex string (different from above)
+      #   BASE_URL       — https://<your-render-app>.onrender.com
+      #   CLIENT_URL     — https://<your-vercel-app>.vercel.app

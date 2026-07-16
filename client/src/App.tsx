@@ -6,6 +6,7 @@ import Register from './pages/Register'
 import Dashboard from './pages/Dashboard'
 import Urls from './pages/Urls'
 import Analytics from './pages/Analytics'
+import BackendStatusBanner from './components/BackendStatusBanner'
 import { LayoutDashboard, Link2, BarChart3, LogOut } from 'lucide-react'
 
 function ProtectedRoute() {
@@ -70,6 +71,8 @@ function AppLayout() {
 export default function App() {
   return (
     <AuthProvider>
+      {/* BackendStatusBanner is always mounted — it self-hides in dev and after server is live */}
+      <BackendStatusBanner />
       <BrowserRouter>
         <Routes>
           {/* Public */}

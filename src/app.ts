@@ -19,10 +19,25 @@ const app = express()
 // 1. Helmet — 11 security headers including CSP, X-Frame-Options
 app.use(helmet())
 
-// 2. CORS — restrict to CLIENT_URL in production
+// 2. CORS — restrict to CLIENT_URL in production; allow all in development
+//    CLIENT_URL can be comma-separated for multiple allowed origins
+//    e.g. CLIENT_URL=https://linkforge.vercel.app,https://www.linkforge.vercel.app
+const allowedOrigins: string[] =
+  process.env.NODE_ENV === 'production'
+    ? (process.env.CLIENT_URL ?? '').split(',').map((o) => o.trim()).filter(Boolean)
+    : ['*']
+
 app.use(
   cors({
-    origin: process.env.NODE_ENV === 'production' ? process.env.CLIENT_URL : '*',
+    origin: (origin, callback) => {
+      // Allow non-browser requests (Postman, server-to-server, curl)
+      if (!origin) return callback(null, true)
+      // Development: allow everything
+      if (allowedOrigins.includes('*')) return callback(null, true)
+      // Production: allowlist check
+      if (allowedOrigins.includes(origin)) return callback(null, true)
+      callback(new Error(`CORS: origin ${origin} not allowed`))
+    },
     credentials: true,
   })
 )

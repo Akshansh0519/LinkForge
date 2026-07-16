@@ -17,7 +17,9 @@ async function main() {
     logger.info('redis_connected')
 
     // Start the HTTP server
-    const server = app.listen(PORT, () => {
+    // Listen on 0.0.0.0 — required for Render/Docker/cloud containers.
+    // Binding only to 127.0.0.1 (Node's default) makes the service unreachable externally.
+    const server = app.listen(PORT, '0.0.0.0', () => {
       logger.info({ port: PORT, env: process.env.NODE_ENV ?? 'development' }, 'server_started')
     })
 
