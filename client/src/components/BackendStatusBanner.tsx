@@ -87,7 +87,7 @@ export default function BackendStatusBanner() {
                 <span className="bsb-pulse-core bsb-pulse-core--warning" />
               </span>
               <ServerCrash size={15} className="bsb-icon--warning" />
-              <span className="bsb-title bsb-title--warning">Render Free Tier — Cold Start</span>
+              <span className="bsb-title bsb-title--warning">Vercel Serverless — Starting Up</span>
             </div>
             <span className="bsb-attempt-badge">
               Attempt #{attempt || 1}
@@ -95,10 +95,9 @@ export default function BackendStatusBanner() {
           </div>
 
           <p className="bsb-body">
-            The LinkForge API runs on{' '}
-            <strong>Render's free tier</strong> and sleeps after 15 min of
-            inactivity. It's waking up now —{' '}
-            <span className="bsb-highlight--warning">~30–50 s warm-up</span>.
+            The LinkForge API is hosted on{' '}
+            <strong>Vercel Serverless</strong>. The function is initializing —{' '}
+            <span className="bsb-highlight--warning">usually under 5 s</span>.
             <span className="bsb-subtext">
               Keep this tab open. The banner disappears the instant the server
               returns&nbsp;200&nbsp;OK.
@@ -110,7 +109,7 @@ export default function BackendStatusBanner() {
             <div className="bsb-service-row">
               <span className="bsb-service-label">
                 <Zap size={12} />
-                Express API (Render)
+                Express API (Vercel)
               </span>
               <span className="bsb-badge bsb-badge--waking">
                 <RefreshCw size={10} className="bsb-spin" />
