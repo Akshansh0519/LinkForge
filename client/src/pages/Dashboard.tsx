@@ -239,7 +239,16 @@ export default function Dashboard() {
                 {recentUrls.map((url) => (
                   <tr key={url.id}>
                     <td>
-                      <span className="url-slug">/{url.slug}</span>
+                      <a 
+                        href={url.shortUrl} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="url-slug" 
+                        style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                        title="Click to open link"
+                      >
+                        /{url.slug}
+                      </a>
                     </td>
                     <td>
                       <span className="url-original">{truncateUrl(url.original)}</span>
