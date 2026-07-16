@@ -11,10 +11,17 @@ async function main() {
     await prisma.$connect()
     logger.info('database_connected')
 
-    // Redis connection is lazy (handled by ioredis internally)
-    // but we ping to confirm
-    await redis.ping()
-    logger.info('redis_connected')
+    // Test Redis connectivity.
+    // Non-fatal: if Redis is unavailable at startup the server still starts.
+    // Cache misses fall back to DB, rate limiting fails-open — both already
+    // handled in cache.ts and rateLimiter.ts. ioredis will auto-reconnect
+    // once Redis becomes available (retryStrategy in redis.ts).
+    try {
+      await redis.ping()
+      logger.info('redis_connected')
+    } catch (err) {
+      logger.warn({ error: err }, 'redis_unavailable_at_startup — running in degraded cache mode')
+    }
 
     // Start the HTTP server
     // Listen on 0.0.0.0 — required for Render/Docker/cloud containers.
